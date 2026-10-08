@@ -106,7 +106,7 @@ body{margin:0;background:var(--night);color:var(--paper);font-family:var(--body)
     <div class="card">
       <div class="ribbon"></div>
       <div class="eyebrow">BIRTHDAY GARDEN · 生日寻宝</div>
-      <h2 id="startTitle">今天是寿星的生日</h2>
+      <h2 id="startTitle">今天是 Qing 的生日</h2>
       <p>我把给你的 5 份礼物藏在了花园里，结果自己忘了藏在哪。你来操控我，帮我把它们一件件找回来吧。有的礼物在屏幕里，有的在现实中等你去拿。</p>
       <div class="who"><canvas id="startDuo" class="sprite" width="28" height="38" style="width:42px;height:57px"></canvas><span>这是我。按住屏幕拖动，我就会跟着走。</span></div>
       <button class="btn" id="startBtn" type="button">帮我找礼物</button>
@@ -151,7 +151,7 @@ body{margin:0;background:var(--night);color:var(--paper);font-family:var(--body)
    想改内容就改这里：名字、每份礼物的文字、现实线索、结尾的话
    ============================================================ */
 const CONFIG = {
-  friend: '寿星',          // 她的名字/昵称
+  friend: 'Qing',          // 她的名字/昵称
   candles: 5,
   finalMessage: '最后一份礼物不在屏幕里。现在去打开门，我在等你。',
   // 两个人的样子：hairStyle 可选 short / long / bun / pony
@@ -590,7 +590,7 @@ $('cardBtn').onclick = ()=>{
 function friendComesOut(){
   if(F.mode!=='inside') return;
   F.mode='walking'; F.leg=1; F.x=FRIEND_PATH[0].x; F.y=FRIEND_PATH[0].y;
-  toast(`礼物全找到了！${CONFIG.friend}从屋里出来了，去蛋糕那里找她`);
+  toast(`礼物全找到了！${CONFIG.friend} 从屋里出来了，去蛋糕那里找她`);
   hintT = 4; chime([523,659,784,1047]);
 }
 
@@ -644,13 +644,13 @@ $('finalBtn').onclick = ()=>{ $('finalOv').hidden = true; state='play'; };
   const cv = $('startDuo'), c = cv.getContext('2d'); c.imageSmoothingEnabled=false;
   drawChar(c,14,34,CONFIG.me,'d',0,false,false);
 })();
-$('startTitle').textContent = `今天是${CONFIG.friend}的生日`;
+$('startTitle').textContent = `今天是 ${CONFIG.friend} 的生日`;
 if(found.size===SPOT_ORDER.length){ F.mode='arrived'; const e=FRIEND_PATH[FRIEND_PATH.length-1]; F.x=e.x; F.y=e.y; F.face='l'; }
 $('startBtn').onclick = ()=>{
   $('startOv').hidden = true; state='play';
   chime([523,659,784]);
   setTimeout(()=>{ $('tip').style.opacity=0; }, 7000);
-  if(F.mode==='arrived') toast(`${CONFIG.friend}在蛋糕旁边等你`);
+  if(F.mode==='arrived') toast(`${CONFIG.friend} 在蛋糕旁边等你`);
 };
 $('hintBtn').onclick = ()=>{ hintT = 3.5; };
 $('soundBtn').onclick = ()=>{ muted=!muted; $('soundBtn').textContent = muted?'音效 关':'音效 开'; $('soundBtn').setAttribute('aria-pressed', String(muted)); };
