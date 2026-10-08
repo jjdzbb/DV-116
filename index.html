@@ -1,0 +1,673 @@
+<title>生日寻宝花园</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap">
+<style>
+/* 布局：全屏夜晚花园画布，礼物卡片像纸片一样浮在上面（单一夜景世界，不随主题切换） */
+:root{
+  --night:#1d2737;
+  --paper:#fff4df;
+  --paper-edge:#e6cfa6;
+  --ink:#3b2a35;
+  --coral:#ff7b6b;
+  --gold:#ffd36e;
+  --mint:#7fd3b8;
+  --shade:rgba(18,24,36,.62);
+  --display:'ZCOOL KuaiLe','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --body:'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC',system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--night);color:var(--paper);font-family:var(--body);overflow:hidden}
+#app{position:relative;width:100%;height:100%;overflow:hidden}
+#game{display:block;width:100%;height:100%;touch-action:none;cursor:pointer}
+#fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:30}
+
+.hud{position:absolute;top:12px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none;z-index:10}
+.pill{pointer-events:auto;display:flex;align-items:center;gap:8px;background:var(--shade);border:2px solid rgba(255,244,223,.25);padding:6px 12px;border-radius:999px;font-family:var(--display);font-size:16px;letter-spacing:.04em;backdrop-filter:blur(4px)}
+.dots{display:flex;gap:4px}
+.dots i{width:10px;height:10px;border:2px solid var(--gold);display:block;transition:background .3s}
+.dots i.on{background:var(--gold)}
+.btns{display:flex;gap:8px}
+.hbtn{pointer-events:auto;font-family:var(--display);font-size:15px;color:var(--paper);background:var(--shade);border:2px solid rgba(255,244,223,.25);border-radius:999px;padding:6px 14px;cursor:pointer}
+.hbtn:focus-visible,.btn:focus-visible,.outfit:focus-visible,.candle:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+.tip{position:absolute;left:16px;right:16px;bottom:18px;text-align:center;z-index:10;pointer-events:none;transition:opacity .6s}
+.tip span{display:inline-block;background:var(--shade);padding:8px 14px;border-radius:999px;font-size:13px;line-height:1.5}
+
+.overlay{position:absolute;inset:0;display:grid;place-items:center;padding-inline:16px;padding-block:24px;background:rgba(14,19,29,.55);z-index:20;overflow-y:auto}
+.card{position:relative;width:100%;max-width:340px;background:var(--paper);color:var(--ink);border:3px solid var(--ink);border-radius:4px;box-shadow:6px 6px 0 rgba(0,0,0,.35);padding:22px 20px 20px;display:flex;flex-direction:column;gap:12px;animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.7) rotate(-3deg);opacity:0}to{transform:none;opacity:1}}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--coral);font-weight:600}
+.card h2{margin:0;font-family:var(--display);font-weight:400;font-size:26px;line-height:1.2;text-wrap:balance}
+.card p{margin:0;font-size:15px;line-height:1.75}
+.clue{border:2px dashed var(--coral);background:#ffe9dc;padding:10px 12px;border-radius:3px;display:flex;flex-direction:column;gap:4px}
+.clue b{font-size:12px;letter-spacing:.12em;color:var(--coral)}
+.clue span{font-size:14px;line-height:1.6}
+.btn{align-self:flex-start;font-family:var(--display);font-size:18px;background:var(--coral);color:var(--paper);border:3px solid var(--ink);border-radius:3px;padding:8px 18px;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.ribbon{position:absolute;top:-14px;right:18px;width:34px;height:28px;background:var(--coral);border:3px solid var(--ink)}
+.ribbon::after{content:"";position:absolute;left:11px;top:-3px;width:6px;height:28px;background:var(--gold)}
+
+.sprite{image-rendering:pixelated;align-self:center}
+.who{display:flex;align-items:center;gap:12px;background:#fbe8c6;border:2px solid var(--paper-edge);border-radius:3px;padding:8px 12px}
+.who span{font-size:13px;line-height:1.5}
+
+.cake-wrap{display:grid;place-items:center;padding-block:28px 6px}
+.cake{position:relative;width:200px;height:132px}
+.tier{position:absolute;left:50%;transform:translateX(-50%);border:3px solid var(--ink);border-radius:3px}
+.tier.b{bottom:0;width:190px;height:62px;background:repeating-linear-gradient(90deg,#ffb3c1 0 18px,#ffc7d2 18px 36px)}
+.tier.t{bottom:59px;width:140px;height:46px;background:#fff0f3}
+.tier.t::before,.tier.b::before{content:"";position:absolute;left:-3px;right:-3px;top:-3px;height:12px;background:var(--paper);border:3px solid var(--ink);border-radius:3px 3px 8px 8px}
+.candles{position:absolute;bottom:103px;left:50%;transform:translateX(-50%);display:flex;gap:12px}
+.candle{position:relative;width:12px;height:34px;padding:0;border:2px solid var(--ink);background:repeating-linear-gradient(160deg,var(--mint) 0 5px,var(--paper) 5px 10px);cursor:pointer}
+.candle::before{content:"";position:absolute;inset:-22px -12px 0}
+.flame{position:absolute;left:50%;bottom:100%;margin-bottom:3px;width:10px;height:16px;transform:translateX(-50%);background:radial-gradient(ellipse at 50% 70%,#fff7c2 0 25%,var(--gold) 45%,var(--coral) 80%);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;animation:flick .25s infinite alternate}
+@keyframes flick{to{transform:translateX(-50%) scale(.85,1.1) rotate(4deg)}}
+.candle .flame{display:none}
+.candle.lit .flame{display:block}
+.candle.out::after{content:"";position:absolute;left:50%;bottom:100%;width:6px;height:6px;border-radius:50%;background:rgba(160,160,170,.7);animation:smoke 1s forwards}
+@keyframes smoke{to{transform:translate(-30%,-26px) scale(2.4);opacity:0}}
+
+.toast{position:absolute;left:16px;right:16px;top:64px;text-align:center;z-index:15;pointer-events:none}
+.toast span{display:inline-block;background:var(--gold);color:var(--ink);border:2px solid var(--ink);padding:8px 14px;border-radius:3px;font-family:var(--display);font-size:16px;box-shadow:3px 3px 0 rgba(0,0,0,.3)}
+
+@media (prefers-reduced-motion: reduce){
+  .card{animation:none}
+  .flame{animation:none}
+}
+</style>
+
+<div id="app">
+  <canvas id="game" aria-label="生日花园小游戏画面"></canvas>
+  <canvas id="fx"></canvas>
+
+  <div class="hud">
+    <div class="pill" aria-live="polite">礼物 <span id="count">0 / 5</span><div class="dots" id="dots"></div></div>
+    <div class="btns">
+      <button class="hbtn" id="hintBtn" type="button">提示</button>
+      <button class="hbtn" id="soundBtn" type="button" aria-pressed="false">音效 开</button>
+    </div>
+  </div>
+
+  <div class="tip" id="tip"><span>按住屏幕拖动带我走。靠近闪光的地方就能找到礼物</span></div>
+  <div class="toast" id="toast" hidden><span id="toastText"></span></div>
+
+  <!-- 开始 -->
+  <div class="overlay" id="startOv">
+    <div class="card">
+      <div class="ribbon"></div>
+      <div class="eyebrow">BIRTHDAY GARDEN · 生日寻宝</div>
+      <h2 id="startTitle">今天是寿星的生日</h2>
+      <p>我把给你的 5 份礼物藏在了花园里，结果自己忘了藏在哪。你来操控我，帮我把它们一件件找回来吧。有的礼物在屏幕里，有的在现实中等你去拿。</p>
+      <div class="who"><canvas id="startDuo" class="sprite" width="28" height="38" style="width:42px;height:57px"></canvas><span>这是我。按住屏幕拖动，我就会跟着走。</span></div>
+      <button class="btn" id="startBtn" type="button">帮我找礼物</button>
+    </div>
+  </div>
+
+  <!-- 礼物卡片 -->
+  <div class="overlay" id="cardOv" hidden>
+    <div class="card">
+      <div class="ribbon"></div>
+      <div class="eyebrow" id="cardIdx">第 1 份礼物</div>
+      <h2 id="cardTitle"></h2>
+      <p id="cardText"></p>
+      <div class="clue" id="cardClue"><b>现实线索</b><span id="cardClueText"></span></div>
+      <button class="btn" id="cardBtn" type="button">收下，继续找</button>
+    </div>
+  </div>
+
+  <!-- 结尾蛋糕 -->
+  <div class="overlay" id="finalOv" hidden>
+    <div class="card">
+      <div class="eyebrow">最后一份</div>
+      <h2 id="finalTitle"></h2>
+      <canvas id="duo" class="sprite" width="48" height="38" style="width:96px;height:76px"></canvas>
+      <p id="finalLead">我们一起把蜡烛点上吧。</p>
+      <div class="cake-wrap">
+        <div class="cake">
+          <div class="candles" id="candles"></div>
+          <div class="tier t"></div>
+          <div class="tier b"></div>
+        </div>
+      </div>
+      <p id="finalMsg" hidden></p>
+      <button class="btn" id="blowBtn" type="button" hidden>一起吹蜡烛</button>
+      <button class="btn" id="finalBtn" type="button" hidden>再逛逛花园</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   想改内容就改这里：名字、每份礼物的文字、现实线索、结尾的话
+   ============================================================ */
+const CONFIG = {
+  friend: '寿星',          // 她的名字/昵称
+  candles: 5,
+  finalMessage: '最后一份礼物不在屏幕里。现在去打开门，我在等你。',
+  // 两个人的样子：hairStyle 可选 short / long / bun / pony
+  me:     { skin:'#f2c9a5', hair:'#2b2433', hairStyle:'short', shirt:'#4a78b5', pants:'#3b3f52', glasses:false },
+  friendLook: { skin:'#f5d0b0', hair:'#5a3424', hairStyle:'long', shirt:'#ff8fa3', pants:'#4a3b5c', glasses:false },
+  gifts: {
+    mailbox: {
+      title: '信箱里的明信片',
+      text: '这是第一份礼物。认识你这么久，最喜欢的就是每次见面你都会先笑起来。',
+      clue: '去你家楼下的信箱看看，那里有一张真的明信片。'
+    },
+    bush: {
+      title: '灌木丛里的磁带',
+      text: '还记得我们一起把歌词全唱错的那个晚上吗？我到现在想起来还会偷笑。',
+      clue: ''
+    },
+    rock: {
+      title: '石头下的纸条',
+      text: '愿你新的一岁，想做的事都有勇气去做，想见的人都能见到。',
+      clue: '打开你书桌左边第二个抽屉。'
+    },
+    tree: {
+      title: '树洞里的小盒子',
+      text: '这一年你辛苦了。以后累的时候，记得还有我们在。',
+      clue: ''
+    },
+    dog: {
+      title: '狗屋旁的气球',
+      text: '生日这天什么都不用做，好好被大家宠着就行。',
+      clue: '看看你的手机，有好几条语音正在路上。'
+    }
+  }
+};
+/* ============================================================ */
+
+const SPOT_ORDER = ['mailbox','bush','rock','tree','dog'];
+const WW = 704, WH = 896;
+
+const $ = id => document.getElementById(id);
+const C = $('game'), ctx = C.getContext('2d');
+const FX = $('fx'), fctx = FX.getContext('2d');
+
+/* ---------- 地图 ---------- */
+const solids = [];
+const solid = (x,y,w,h) => solids.push({x,y,w,h});
+solid(0,0,WW,26); solid(0,WH-16,WW,16); solid(0,0,16,WH); solid(WW-16,0,16,WH);
+solid(224,60,256,130);           // 房子
+solid(432,568,136,64);           // 池塘
+
+const OBJ = [
+  {k:'tree',x:96,y:300},{k:'tree',x:612,y:190},{k:'tree',x:632,y:452},
+  {k:'tree',x:120,y:760,spot:'tree'},{k:'tree',x:262,y:862},
+  {k:'bush',x:88,y:480,spot:'bush'},{k:'bush',x:196,y:330},{k:'bush',x:560,y:724},
+  {k:'mailbox',x:612,y:270,spot:'mailbox'},
+  {k:'rock',x:408,y:680,spot:'rock'},
+  {k:'dog',x:600,y:836,spot:'dog'},
+  {k:'bench',x:480,y:392}
+];
+OBJ.forEach(o=>{
+  if(o.k==='tree') solid(o.x-8,o.y-10,16,10);
+  if(o.k==='bush') solid(o.x-20,o.y-12,40,12);
+  if(o.k==='mailbox') solid(o.x-6,o.y-6,12,6);
+  if(o.k==='rock') solid(o.x-14,o.y-10,28,10);
+  if(o.k==='dog') solid(o.x-22,o.y-24,44,24);
+  if(o.k==='bench') solid(o.x-26,o.y-10,52,10);
+});
+const SPOTS = {};
+OBJ.forEach(o=>{ if(o.spot) SPOTS[o.spot] = {x:o.x, y:o.y+6, phase:Math.random()*6}; });
+const CAKE = {x:348, y:482};
+
+/* ---------- 状态 ---------- */
+let found = new Set();
+try{ JSON.parse(localStorage.getItem('bday-garden-v2')||'[]').forEach(s=>SPOTS[s]&&found.add(s)); }catch(e){}
+const save = ()=>{ try{ localStorage.setItem('bday-garden-v2', JSON.stringify([...found])); }catch(e){} };
+
+let state = 'start';
+const P = {x:352, y:236, face:'d', walk:0, moving:false};
+// 她：一开始在屋里，礼物全找到后从门口走到蛋糕旁
+const FRIEND_PATH = [{x:352,y:198},{x:352,y:430},{x:382,y:496}];
+const F = {x:352, y:198, face:'d', walk:0, moving:false, mode:'inside', leg:1};
+let candlesLit = false;
+let target = null, pressed = false, stuck = 0;
+const keys = {};
+let t = 0, hintT = 0, popping = null, cakeDone = false;
+const fireflies = Array.from({length:16},()=>({x:Math.random()*WW,y:120+Math.random()*(WH-140),a:Math.random()*6,s:.3+Math.random()*.6}));
+
+/* ---------- 静态背景 ---------- */
+let seed = 11;
+const rnd = ()=> (seed = seed*16807 % 2147483647, (seed-1)/2147483646);
+const bg = document.createElement('canvas'); bg.width = WW; bg.height = WH;
+(function drawBg(){
+  const g = bg.getContext('2d');
+  g.fillStyle = '#45704a'; g.fillRect(0,0,WW,WH);
+  for(let i=0;i<2600;i++){
+    g.fillStyle = rnd()<.5 ? '#4f7d52' : '#3d6543';
+    g.fillRect(Math.floor(rnd()*WW/2)*2, Math.floor(rnd()*WH/2)*2, 2, 2);
+  }
+  const flowerCols = ['#fff4df','#ffb3c1','#ffd36e','#b9a6ff'];
+  for(let i=0;i<120;i++){
+    g.fillStyle = flowerCols[Math.floor(rnd()*4)];
+    g.fillRect(Math.floor(rnd()*WW), 40+Math.floor(rnd()*(WH-60)), 2, 2);
+  }
+  // 小路
+  const path = (x,y,w,h)=>{
+    g.fillStyle='#c8a77a'; g.fillRect(x,y,w,h);
+    g.fillStyle='#b08f63';
+    for(let yy=y; yy<y+h; yy+=16) g.fillRect(x,yy,w,1);
+    for(let yy=y; yy<y+h; yy+=16) for(let xx=x+((yy/16)%2?8:0); xx<x+w; xx+=16) g.fillRect(xx,yy,1,16);
+  };
+  path(336,190,32,256); path(368,282,236,24);
+  // 野餐垫
+  for(let yy=0; yy<6; yy++) for(let xx=0; xx<8; xx++){
+    g.fillStyle = (xx+yy)%2 ? '#fff0d8' : '#e2685c';
+    g.fillRect(300+xx*12, 446+yy*12, 12, 12);
+  }
+  g.strokeStyle='#8c3f3f'; g.lineWidth=2; g.strokeRect(300,446,96,72);
+  // 花坛
+  const bed=(x,y,w,h)=>{
+    g.fillStyle='#6b4a33'; g.fillRect(x,y,w,h);
+    g.fillStyle='#53392a'; g.fillRect(x,y+h-3,w,3);
+    for(let i=0;i<w*h/30;i++){ g.fillStyle=flowerCols[Math.floor(rnd()*4)]; g.fillRect(x+2+Math.floor(rnd()*(w-6)), y+2+Math.floor(rnd()*(h-7)), 3, 3); }
+  };
+  bed(40,170,110,28); bed(150,590,80,24); bed(520,330,70,22);
+  // 池塘
+  g.fillStyle='#3a6f8a'; g.beginPath(); g.ellipse(500,600,82,52,0,0,7); g.fill();
+  g.fillStyle='#2f5f7a'; g.beginPath(); g.ellipse(500,604,72,42,0,0,7); g.fill();
+  g.fillStyle='#5aa0b8'; g.fillRect(470,588,22,2); g.fillRect(520,612,16,2);
+  g.fillStyle='#5f9a52'; [[462,612],[540,590],[505,626]].forEach(([x,y])=>{g.beginPath();g.ellipse(x,y,9,6,0,0,7);g.fill();});
+  g.fillStyle='#ffb3c1'; g.fillRect(538,588,3,3);
+  // 房子
+  g.fillStyle='#e8d6b8'; g.fillRect(232,92,240,98);
+  g.fillStyle='#d4bf9d'; for(let yy=100; yy<190; yy+=10) g.fillRect(232,yy,240,1);
+  g.fillStyle='#a8484e'; g.beginPath(); g.moveTo(216,96); g.lineTo(260,36); g.lineTo(444,36); g.lineTo(488,96); g.closePath(); g.fill();
+  g.fillStyle='#8c3a40'; for(let yy=46; yy<96; yy+=10) g.fillRect(216+ (96-yy)*0, yy, 0, 0);
+  g.fillStyle='#8c3a40'; g.fillRect(216,94,272,4);
+  [[256,118],[408,118]].forEach(([x,y])=>{ g.fillStyle='#6b4a33'; g.fillRect(x-2,y-2,44,36); g.fillStyle='#ffd36e'; g.fillRect(x,y,40,32); g.fillStyle='#6b4a33'; g.fillRect(x+19,y,2,32); g.fillRect(x,y+15,40,2); });
+  g.fillStyle='#6b4a33'; g.fillRect(334,148,36,42); g.fillStyle='#8a5f40'; g.fillRect(338,152,28,38); g.fillStyle='#ffd36e'; g.fillRect(360,170,3,3);
+  // 栅栏和树篱
+  g.fillStyle='#2c4a33'; g.fillRect(0,0,16,WH); g.fillRect(WW-16,0,16,WH); g.fillRect(0,WH-16,WW,16);
+  g.fillStyle='#365a3d'; for(let y=0;y<WH;y+=12){ g.fillRect(4,y,8,6); g.fillRect(WW-12,y+6,8,6); } for(let x=0;x<WW;x+=12) g.fillRect(x,WH-12,6,8);
+  g.fillStyle='#1d2737'; g.fillRect(0,0,WW,12);
+  for(let x=4;x<WW;x+=12){ g.fillStyle='#b88a5a'; g.fillRect(x,6,8,20); g.fillStyle='#9a7048'; g.fillRect(x,6,8,2); }
+  g.fillStyle='#8a6440'; g.fillRect(0,12,WW,3); g.fillRect(0,21,WW,3);
+})();
+
+/* ---------- 绘制函数 ---------- */
+function drawChar(c, x, y, o, face, phase, moving, hat){
+  x = Math.round(x); y = Math.round(y);
+  const bob = moving ? Math.round(Math.abs(Math.sin(phase))*1.5) : 0;
+  c.fillStyle='rgba(0,0,0,.28)'; c.beginPath(); c.ellipse(x,y,8,3,0,0,7); c.fill();
+  const l = moving ? Math.round(Math.sin(phase)*2) : 0;
+  c.fillStyle=o.pants; c.fillRect(x-5,y-6-0+l*0,4,6-Math.max(0,l)); c.fillRect(x+1,y-6,4,6-Math.max(0,-l));
+  const by = y-6-bob;
+  c.fillStyle=o.shirt; c.fillRect(x-6,by-9,12,9);
+  c.fillStyle='rgba(0,0,0,.15)'; c.fillRect(x-6,by-2,12,2);
+  c.fillStyle=o.skin;
+  if(face!=='u'){ c.fillRect(x-8,by-8,2,5); c.fillRect(x+6,by-8,2,5); }
+  const hy = by-19, st = o.hairStyle;
+  // 长发在头后面
+  if(st==='long'){ c.fillStyle=o.hair; c.fillRect(x-7,hy+2,14, face==='u'?14:12); }
+  c.fillStyle=o.skin; c.fillRect(x-6,hy,12,10);
+  c.fillStyle=o.hair;
+  if(face==='u'){ c.fillRect(x-6,hy,12,10); }
+  else { c.fillRect(x-6,hy,12,3); c.fillRect(x-6,hy,2,7); c.fillRect(x+4,hy,2,7);
+    if(face==='l') c.fillRect(x+2,hy,4,8); if(face==='r') c.fillRect(x-6,hy,4,8); }
+  if(st==='bun'){ c.fillRect(x-3,hy-4,6,4); }
+  if(st==='pony'){ const px = face==='l'? x+6 : face==='r'? x-9 : x+5; c.fillRect(px,hy+2,3,8); }
+  c.fillStyle='#3b2a35';
+  if(face==='d'){ c.fillRect(x-3,hy+5,2,2); c.fillRect(x+1,hy+5,2,2); c.fillStyle='#ff9a9a'; c.fillRect(x-5,hy+7,2,1); c.fillRect(x+3,hy+7,2,1); }
+  if(face==='l') c.fillRect(x-4,hy+5,2,2);
+  if(face==='r') c.fillRect(x+2,hy+5,2,2);
+  if(o.glasses && face!=='u'){
+    c.strokeStyle='#3b2a35'; c.lineWidth=1;
+    if(face==='d'){ c.strokeRect(x-4.5,hy+4.5,4,3); c.strokeRect(x+0.5,hy+4.5,4,3); }
+    else c.strokeRect((face==='l'?x-5.5:x+1.5),hy+4.5,4,3);
+  }
+  if(hat){ // 生日帽
+    const top = st==='bun' ? hy-3 : hy+1;
+    c.fillStyle='#ffd36e'; c.beginPath(); c.moveTo(x-4,top); c.lineTo(x,top-10); c.lineTo(x+4,top); c.closePath(); c.fill();
+    c.fillStyle='#ff7b6b'; c.fillRect(x-2,top-4,4,2); c.fillRect(x-1,top-12,3,3);
+  }
+}
+function drawTree(x,y){
+  ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(x,y,20,6,0,0,7); ctx.fill();
+  ctx.fillStyle='#7a5235'; ctx.fillRect(x-5,y-24,10,24);
+  ctx.fillStyle='#2f5a3b'; ctx.beginPath(); ctx.arc(x,y-46,28,0,7); ctx.fill();
+  ctx.fillStyle='#3e7048'; ctx.beginPath(); ctx.arc(x-6,y-52,20,0,7); ctx.fill();
+  ctx.fillStyle='#4f8a55'; ctx.beginPath(); ctx.arc(x-12,y-58,9,0,7); ctx.fill();
+}
+function drawObj(o){
+  const {x,y} = o;
+  if(o.k==='tree'){ drawTree(x,y); if(o.spot){ ctx.fillStyle='#3b2618'; ctx.beginPath(); ctx.ellipse(x,y-12,3,5,0,0,7); ctx.fill(); } }
+  else if(o.k==='bush'){
+    ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(x,y,22,5,0,0,7); ctx.fill();
+    ctx.fillStyle='#355f3e'; ctx.beginPath(); ctx.ellipse(x,y-12,24,15,0,0,7); ctx.fill();
+    ctx.fillStyle='#47804e'; ctx.beginPath(); ctx.ellipse(x-5,y-16,15,10,0,0,7); ctx.fill();
+    ctx.fillStyle='#ff7b6b'; [[-10,-10],[8,-14],[2,-6],[12,-6]].forEach(([a,b])=>ctx.fillRect(x+a,y+b,3,3));
+  }
+  else if(o.k==='mailbox'){
+    ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(x,y,8,3,0,0,7); ctx.fill();
+    ctx.fillStyle='#6b4a33'; ctx.fillRect(x-2,y-22,4,22);
+    ctx.fillStyle='#4a78b5'; ctx.fillRect(x-11,y-34,22,13); ctx.fillRect(x-9,y-36,18,2);
+    ctx.fillStyle='#365a8a'; ctx.fillRect(x-11,y-23,22,2);
+    ctx.fillStyle='#ff7b6b'; ctx.fillRect(x+11,y-36,2,10); ctx.fillRect(x+13,y-36,5,4);
+  }
+  else if(o.k==='rock'){
+    ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(x,y,16,4,0,0,7); ctx.fill();
+    ctx.fillStyle='#7d8696'; ctx.beginPath(); ctx.ellipse(x,y-8,16,10,0,0,7); ctx.fill();
+    ctx.fillStyle='#9aa3b2'; ctx.beginPath(); ctx.ellipse(x-4,y-12,8,4,0,0,7); ctx.fill();
+  }
+  else if(o.k==='dog'){
+    ctx.fillStyle='rgba(0,0,0,.25)'; ctx.fillRect(x-24,y-2,48,5);
+    ctx.fillStyle='#c98a55'; ctx.fillRect(x-22,y-28,44,28);
+    ctx.fillStyle='#b07644'; for(let yy=y-24; yy<y; yy+=6) ctx.fillRect(x-22,yy,44,1);
+    ctx.fillStyle='#8c3f3f'; ctx.beginPath(); ctx.moveTo(x-27,y-26); ctx.lineTo(x,y-46); ctx.lineTo(x+27,y-26); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#2a1d17'; ctx.fillRect(x-8,y-16,16,16); ctx.beginPath(); ctx.arc(x,y-16,8,Math.PI,0); ctx.fill();
+    ctx.fillStyle='#fff4df'; ctx.fillRect(x-6,y-40,12,6); ctx.fillStyle='#3b2a35'; ctx.fillRect(x-4,y-38,8,2);
+  }
+  else if(o.k==='bench'){
+    ctx.fillStyle='rgba(0,0,0,.22)'; ctx.fillRect(x-26,y-2,52,4);
+    ctx.fillStyle='#6b4a33'; ctx.fillRect(x-24,y-10,4,10); ctx.fillRect(x+20,y-10,4,10);
+    ctx.fillStyle='#b88a5a'; ctx.fillRect(x-28,y-14,56,5); ctx.fillRect(x-28,y-26,56,4); ctx.fillRect(x-28,y-20,56,3);
+  }
+}
+function drawCake(){
+  const {x,y} = CAKE;
+  ctx.fillStyle='#fff4df'; ctx.beginPath(); ctx.ellipse(x,y,18,6,0,0,7); ctx.fill();
+  ctx.fillStyle='#ffb3c1'; ctx.fillRect(x-13,y-16,26,14);
+  ctx.fillStyle='#fff0f3'; ctx.fillRect(x-13,y-18,26,5);
+  for(let i=-1;i<=1;i++){
+    ctx.fillStyle='#7fd3b8'; ctx.fillRect(x+i*8-1,y-25,3,7);
+    if(candlesLit && !cakeDone){ const f = 1+Math.sin(t*20+i)*.3; ctx.fillStyle='#ffd36e'; ctx.fillRect(x+i*8-1,y-29-f,3,3+f); }
+  }
+  if(!cakeDone){ const g = ctx.createRadialGradient(x,y-26,0,x,y-26,40); g.addColorStop(0,'rgba(255,211,110,.35)'); g.addColorStop(1,'rgba(255,211,110,0)'); ctx.fillStyle=g; ctx.fillRect(x-40,y-66,80,80); }
+}
+function star(x,y,r,a,col){
+  ctx.globalAlpha = a; ctx.fillStyle = col;
+  ctx.fillRect(x-1,y-r,2,r*2); ctx.fillRect(x-r,y-1,r*2,2); ctx.fillRect(x-2,y-2,4,4);
+  ctx.globalAlpha = 1;
+}
+function drawLights(){
+  const bulbs = ['#ffd36e','#ff7b6b','#7fd3b8','#fff4df'];
+  ctx.strokeStyle='#2a2f3a'; ctx.lineWidth=1;
+  for(let sx=16; sx<WW-16; sx+=96){
+    ctx.beginPath(); ctx.moveTo(sx,10); ctx.quadraticCurveTo(sx+48,36,sx+96,10); ctx.stroke();
+    for(let i=1;i<6;i++){
+      const u=i/6, bx = sx+96*u, by = (1-u)*(1-u)*10+2*(1-u)*u*36+u*u*10 + 3;
+      const c = bulbs[(i+sx/96)%4|0];
+      const tw = .55+.45*Math.sin(t*2.2+i*1.7+sx);
+      const g = ctx.createRadialGradient(bx,by,0,bx,by,12); g.addColorStop(0,c); g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.globalAlpha = .35*tw; ctx.fillStyle = g; ctx.fillRect(bx-12,by-12,24,24); ctx.globalAlpha = 1;
+      ctx.fillStyle = c; ctx.fillRect(Math.round(bx)-1,Math.round(by)-1,3,4);
+    }
+  }
+}
+
+/* ---------- 碰撞与移动 ---------- */
+const hit = (x,y)=> solids.some(s=> x-7 < s.x+s.w && x+7 > s.x && y-5 < s.y+s.h && y+1 > s.y);
+function move(dx,dy){
+  let moved = false;
+  if(dx && !hit(P.x+dx,P.y)){ P.x+=dx; moved=true; }
+  if(dy && !hit(P.x,P.y+dy)){ P.y+=dy; moved=true; }
+  return moved;
+}
+
+/* ---------- 更新 ---------- */
+function update(dt){
+  fireflies.forEach(f=>{ f.a+=dt*f.s; f.x+=Math.cos(f.a)*8*dt; f.y+=Math.sin(f.a*1.3)*6*dt; });
+  if(popping){ popping.t += dt; if(popping.t > .8){ const id=popping.id; popping=null; openCard(id); } }
+  if(hintT>0) hintT-=dt;
+  if(F.mode==='walking'){
+    const wp = FRIEND_PATH[F.leg];
+    const dx=wp.x-F.x, dy=wp.y-F.y, d=Math.hypot(dx,dy), sp=70*dt;
+    if(d<=sp){ F.x=wp.x; F.y=wp.y; F.leg++; if(F.leg>=FRIEND_PATH.length){ F.mode='arrived'; F.moving=false; F.face='l'; } }
+    else { F.x+=dx/d*sp; F.y+=dy/d*sp; F.moving=true; F.walk+=dt*10; F.face = Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u'); }
+  }
+  if(state!=='play' || popping){ P.moving=false; return; }
+
+  let dx=0, dy=0;
+  if(keys.ArrowLeft||keys.a) dx-=1; if(keys.ArrowRight||keys.d) dx+=1;
+  if(keys.ArrowUp||keys.w) dy-=1; if(keys.ArrowDown||keys.s) dy+=1;
+  if(dx||dy){ target=null; const l=Math.hypot(dx,dy); dx/=l; dy/=l; }
+  else if(target){
+    const tx=target.x-P.x, ty=target.y-P.y, d=Math.hypot(tx,ty);
+    if(d<3){ if(!pressed) target=null; } else { dx=tx/d; dy=ty/d; }
+  }
+  P.moving = !!(dx||dy);
+  if(P.moving){
+    const sp = 112*dt;
+    const ok = move(dx*sp, dy*sp);
+    if(!ok){ stuck+=dt; if(stuck>.35 && !pressed){ target=null; stuck=0; } } else stuck=0;
+    P.walk += dt*12;
+    P.face = Math.abs(dx)>Math.abs(dy) ? (dx>0?'r':'l') : (dy>0?'d':'u');
+  }
+
+  for(const id of SPOT_ORDER){
+    if(found.has(id)) continue;
+    const s = SPOTS[id];
+    if(Math.hypot(P.x-s.x, P.y-s.y) < 34){
+      found.add(id); save(); refreshHud();
+      popping = {id, t:0, x:s.x, y:s.y};
+      target=null; pressed=false;
+      chime([659,784,988]);
+      break;
+    }
+  }
+  if(F.mode==='arrived' && !cakeDone && Math.hypot(P.x-CAKE.x, P.y-(CAKE.y+6)) < 36){
+    target=null; pressed=false; P.face = P.x<CAKE.x ? 'r' : 'l'; openFinal();
+  }
+}
+
+/* ---------- 渲染 ---------- */
+let dpr=1, cssW=0, cssH=0, S=1, camX=0, camY=0;
+function resize(){
+  const r = C.getBoundingClientRect();
+  cssW = r.width; cssH = r.height;
+  dpr = Math.min(window.devicePixelRatio||1, 2);
+  C.width = Math.round(cssW*dpr); C.height = Math.round(cssH*dpr);
+  FX.width = C.width; FX.height = C.height;
+  S = Math.max(1, Math.min(2.4, Math.min(cssW/360, cssH/420)));
+}
+function render(){
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle='#1d2737'; ctx.fillRect(0,0,C.width,C.height);
+  const vw = cssW/S, vh = cssH/S;
+  camX = vw>=WW ? (WW-vw)/2 : Math.max(0, Math.min(WW-vw, P.x-vw/2));
+  camY = vh>=WH ? (WH-vh)/2 : Math.max(0, Math.min(WH-vh, P.y-20-vh/2));
+  const k = S*dpr;
+  ctx.setTransform(k,0,0,k,-Math.round(camX*k),-Math.round(camY*k));
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(bg,0,0);
+
+  if(target && state==='play'){
+    ctx.strokeStyle='rgba(255,244,223,.6)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.ellipse(target.x,target.y,6+Math.sin(t*8),3,0,0,7); ctx.stroke();
+  }
+
+  const items = OBJ.map(o=>({y:o.y, d:()=>drawObj(o)}));
+  items.push({y:P.y, d:()=>drawChar(ctx,P.x,P.y,CONFIG.me,P.face,P.walk,P.moving,false)});
+  if(F.mode!=='inside') items.push({y:F.y, d:()=>drawChar(ctx,F.x,F.y,CONFIG.friendLook,F.face,F.walk,F.moving,true)});
+  if(found.size===SPOT_ORDER.length) items.push({y:CAKE.y, d:drawCake});
+  items.sort((a,b)=>a.y-b.y).forEach(i=>i.d());
+
+  // 闪光提示
+  for(const id of SPOT_ORDER){
+    if(found.has(id)) continue;
+    const s = SPOTS[id], a = Math.sin(t*2.4+s.phase);
+    if(a>.2) star(s.x+8, s.y-34+Math.sin(t*3)*2, 4, (a-.2)*1.2, '#ffd36e');
+  }
+  // 萤火虫
+  fireflies.forEach(f=>{ const a=.4+.6*Math.max(0,Math.sin(f.a*3)); ctx.globalAlpha=a; ctx.fillStyle='#e9ff9a'; ctx.fillRect(Math.round(f.x),Math.round(f.y),2,2); ctx.globalAlpha=a*.25; ctx.fillRect(Math.round(f.x)-2,Math.round(f.y)-2,6,6); });
+  ctx.globalAlpha=1;
+  drawLights();
+
+  // 礼物弹出
+  if(popping){
+    const p = Math.min(1, popping.t/.6), ease = 1-Math.pow(1-p,3);
+    const x = popping.x, y = popping.y - 20 - ease*26;
+    ctx.fillStyle='#ff7b6b'; ctx.fillRect(x-8,y-8,16,13);
+    ctx.fillStyle='#e85d4f'; ctx.fillRect(x-9,y-11,18,4);
+    ctx.fillStyle='#ffd36e'; ctx.fillRect(x-1,y-11,3,16); ctx.fillRect(x-5,y-14,4,3); ctx.fillRect(x+2,y-14,4,3);
+    for(let i=0;i<8;i++){ const ang=i/8*Math.PI*2+t; star(x+Math.cos(ang)*ease*22, y-2+Math.sin(ang)*ease*16, 2, 1-p*.6, i%2?'#fff4df':'#ffd36e'); }
+  }
+
+  // 提示箭头
+  if(hintT>0 && state==='play'){
+    let tgt = null, best = 1e9;
+    if(found.size===SPOT_ORDER.length) tgt = {x:CAKE.x, y:CAKE.y};
+    else for(const id of SPOT_ORDER){ if(found.has(id)) continue; const s=SPOTS[id], d=Math.hypot(s.x-P.x,s.y-P.y); if(d<best){best=d;tgt=s;} }
+    if(tgt){
+      const ang = Math.atan2(tgt.y-P.y, tgt.x-P.x), r = 26+Math.sin(t*8)*3;
+      const ax = P.x+Math.cos(ang)*r, ay = P.y-12+Math.sin(ang)*r;
+      ctx.save(); ctx.translate(ax,ay); ctx.rotate(ang); ctx.globalAlpha=Math.min(1,hintT);
+      ctx.fillStyle='#ffd36e'; ctx.strokeStyle='#3b2a35'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(9,0); ctx.lineTo(-5,-7); ctx.lineTo(-2,0); ctx.lineTo(-5,7); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
+/* ---------- 彩带 ---------- */
+let confetti = [];
+function burst(){
+  const cols=['#ff7b6b','#ffd36e','#7fd3b8','#a283e6','#fff4df'];
+  for(let i=0;i<160;i++) confetti.push({x:Math.random()*cssW, y:-20-Math.random()*cssH*.5, vx:(Math.random()-.5)*60, vy:80+Math.random()*120, r:Math.random()*6, vr:(Math.random()-.5)*8, c:cols[i%5], w:6+Math.random()*5});
+}
+function drawFx(dt){
+  fctx.setTransform(dpr,0,0,dpr,0,0);
+  fctx.clearRect(0,0,cssW,cssH);
+  confetti = confetti.filter(p=>p.y<cssH+20);
+  confetti.forEach(p=>{ p.x+=p.vx*dt; p.y+=p.vy*dt; p.r+=p.vr*dt; fctx.save(); fctx.translate(p.x,p.y); fctx.rotate(p.r); fctx.fillStyle=p.c; fctx.fillRect(-p.w/2,-3,p.w,6); fctx.restore(); });
+}
+
+/* ---------- 声音 ---------- */
+let actx = null, muted = false;
+function chime(freqs, step=.09, dur=.5){
+  if(muted) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const n = actx.currentTime;
+    freqs.forEach((f,i)=>{
+      const o=actx.createOscillator(), g=actx.createGain(), st=n+i*step;
+      o.type='triangle'; o.frequency.value=f;
+      g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(.14,st+.02); g.gain.exponentialRampToValueAtTime(.001,st+dur);
+      o.connect(g); g.connect(actx.destination); o.start(st); o.stop(st+dur+.05);
+    });
+  }catch(e){}
+}
+
+/* ---------- 界面 ---------- */
+function refreshHud(){
+  $('count').textContent = `${found.size} / ${SPOT_ORDER.length}`;
+  $('dots').innerHTML = SPOT_ORDER.map(id=>`<i class="${found.has(id)?'on':''}"></i>`).join('');
+}
+function openCard(id){
+  const g = CONFIG.gifts[id];
+  state = 'card';
+  $('cardIdx').textContent = `第 ${found.size} 份礼物 · 共 ${SPOT_ORDER.length} 份`;
+  $('cardTitle').textContent = g.title;
+  $('cardText').textContent = g.text;
+  $('cardClue').hidden = !g.clue;
+  $('cardClueText').textContent = g.clue || '';
+  $('cardBtn').textContent = found.size===SPOT_ORDER.length ? '收下' : '收下，继续找';
+  $('cardOv').hidden = false;
+  $('cardBtn').focus();
+}
+let toastTimer;
+function toast(msg){
+  $('toastText').textContent = msg; $('toast').hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>$('toast').hidden=true, 3800);
+}
+$('cardBtn').onclick = ()=>{
+  $('cardOv').hidden = true; state = 'play';
+  if(found.size===SPOT_ORDER.length) friendComesOut();
+};
+function friendComesOut(){
+  if(F.mode!=='inside') return;
+  F.mode='walking'; F.leg=1; F.x=FRIEND_PATH[0].x; F.y=FRIEND_PATH[0].y;
+  toast(`礼物全找到了！${CONFIG.friend}从屋里出来了，去蛋糕那里找她`);
+  hintT = 4; chime([523,659,784,1047]);
+}
+
+// 结尾卡片上画两个人
+function drawDuo(){
+  const cv = $('duo'), c = cv.getContext('2d');
+  c.clearRect(0,0,cv.width,cv.height); c.imageSmoothingEnabled=false;
+  drawChar(c,14,34,CONFIG.me,'d',0,false,false);
+  drawChar(c,34,34,CONFIG.friendLook,'d',0,false,true);
+}
+function openFinal(){
+  state = 'final';
+  $('finalTitle').textContent = `生日快乐，${CONFIG.friend}`;
+  $('finalMsg').textContent = CONFIG.finalMessage;
+  $('finalLead').textContent = '我们一起把蜡烛点上吧，点一下每根蜡烛。';
+  $('finalMsg').hidden = true; $('finalBtn').hidden = true; $('blowBtn').hidden = true; $('finalLead').hidden = false;
+  drawDuo();
+  const box = $('candles'); box.innerHTML = '';
+  for(let i=0;i<CONFIG.candles;i++){
+    const b = document.createElement('button');
+    b.className='candle'; b.type='button'; b.id='candle'+i; b.setAttribute('aria-label',`点燃第 ${i+1} 根蜡烛`);
+    b.innerHTML='<span class="flame"></span>';
+    b.onclick = ()=>{
+      if(b.classList.contains('lit') || candlesLit) return;
+      b.classList.add('lit'); chime([523+i*60],.1,.25);
+      if(box.querySelectorAll('.lit').length===CONFIG.candles) allLit();
+    };
+    box.appendChild(b);
+  }
+  $('finalOv').hidden = false;
+}
+function allLit(){
+  candlesLit = true;
+  $('finalLead').textContent = '蜡烛都点好了。许个愿，然后一起吹灭它们。';
+  $('blowBtn').hidden = false; $('blowBtn').focus();
+  // 生日歌开头
+  const song=[392,392,440,392,523,494]; const lens=[.3,.15,.45,.45,.45,.9];
+  let acc=0; song.forEach((f,i)=>{ setTimeout(()=>chime([f],.1,lens[i]+.1), acc*1000+200); acc+=lens[i]; });
+}
+$('blowBtn').onclick = ()=>{
+  cakeDone = true;
+  $('candles').querySelectorAll('.candle').forEach(b=>{ b.classList.remove('lit'); b.classList.add('out'); });
+  $('blowBtn').hidden = true; $('finalLead').hidden = true;
+  $('finalMsg').hidden = false; $('finalBtn').hidden = false;
+  burst(); chime([784,988,1175,1568],.08,.6);
+};
+$('finalBtn').onclick = ()=>{ $('finalOv').hidden = true; state='play'; };
+
+// 开始界面
+(function(){
+  const cv = $('startDuo'), c = cv.getContext('2d'); c.imageSmoothingEnabled=false;
+  drawChar(c,14,34,CONFIG.me,'d',0,false,false);
+})();
+$('startTitle').textContent = `今天是${CONFIG.friend}的生日`;
+if(found.size===SPOT_ORDER.length){ F.mode='arrived'; const e=FRIEND_PATH[FRIEND_PATH.length-1]; F.x=e.x; F.y=e.y; F.face='l'; }
+$('startBtn').onclick = ()=>{
+  $('startOv').hidden = true; state='play';
+  chime([523,659,784]);
+  setTimeout(()=>{ $('tip').style.opacity=0; }, 7000);
+  if(F.mode==='arrived') toast(`${CONFIG.friend}在蛋糕旁边等你`);
+};
+$('hintBtn').onclick = ()=>{ hintT = 3.5; };
+$('soundBtn').onclick = ()=>{ muted=!muted; $('soundBtn').textContent = muted?'音效 关':'音效 开'; $('soundBtn').setAttribute('aria-pressed', String(muted)); };
+
+/* ---------- 输入 ---------- */
+function toWorld(e){
+  const r = C.getBoundingClientRect();
+  return { x: camX + (e.clientX-r.left)/S, y: camY + (e.clientY-r.top)/S + 4 };
+}
+C.addEventListener('pointerdown', e=>{ if(state!=='play') return; pressed=true; target=toWorld(e); try{C.setPointerCapture(e.pointerId);}catch(_){} });
+C.addEventListener('pointermove', e=>{ if(pressed && state==='play') target=toWorld(e); });
+const release = ()=>{ pressed=false; };
+C.addEventListener('pointerup', release); C.addEventListener('pointercancel', release);
+addEventListener('keydown', e=>{ const k = e.key.length===1 ? e.key.toLowerCase() : e.key; if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(k)) e.preventDefault(); keys[k]=true; });
+addEventListener('keyup', e=>{ const k = e.key.length===1 ? e.key.toLowerCase() : e.key; keys[k]=false; });
+addEventListener('blur', ()=>{ for(const k in keys) keys[k]=false; });
+addEventListener('resize', resize);
+
+/* ---------- 主循环 ---------- */
+resize(); refreshHud();
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(.05, (now-last)/1000); last = now; t += dt;
+  update(dt); render(); drawFx(dt);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
